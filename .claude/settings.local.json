@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "allow": ["Skill(shadcn)", "Bash(pnpm build:*)", "Bash(pnpm dlx:*)"]
+  }
+}
