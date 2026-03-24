@@ -4,19 +4,11 @@ import {
   LayoutDashboard,
   Users,
   ShoppingCart,
-  BarChart3,
   Settings,
   ChevronRight,
   ChevronsUpDown,
-  Package,
-  Bell,
-  UserCheck,
-  UserX,
-  PackageSearch,
-  PackagePlus,
-  LineChart,
-  PieChart,
   AlertTriangle,
+  LogIn,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -65,51 +57,22 @@ const navGroups: NavGroup[] = [
   {
     label: "业务管理",
     items: [
-      {
-        title: "用户管理",
-        icon: Users,
-        children: [
-          { title: "用户列表", href: "/users" },
-          { title: "已认证用户", href: "/users/verified" },
-          { title: "已禁用用户", href: "/users/banned" },
-        ],
-      },
-      {
-        title: "订单管理",
-        icon: ShoppingCart,
-        children: [
-          { title: "全部订单", href: "/orders" },
-          { title: "待处理", href: "/orders/pending" },
-        ],
-      },
-      {
-        title: "商品管理",
-        icon: Package,
-        children: [
-          { title: "商品列表", href: "/products" },
-          { title: "添加商品", href: "/products/new" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "分析",
-    items: [
-      {
-        title: "数据分析",
-        icon: BarChart3,
-        children: [
-          { title: "趋势报表", href: "/analytics" },
-          { title: "用户统计", href: "/analytics/users" },
-        ],
-      },
-      { title: "通知中心", icon: Bell, href: "/notifications" },
+      { title: "用户管理", icon: Users, href: "/users" },
+      { title: "订单管理", icon: ShoppingCart, href: "/orders" },
     ],
   },
   {
     label: "系统",
     items: [
       { title: "系统设置", icon: Settings, href: "/settings" },
+      {
+        title: "登录页面",
+        icon: LogIn,
+        children: [
+          { title: "居中登录", href: "/login" },
+          { title: "分栏登录", href: "/login-split" },
+        ],
+      },
       {
         title: "错误页面",
         icon: AlertTriangle,
