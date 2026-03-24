@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -12,40 +11,23 @@ import {
 import { StyleSettings } from "@/components/style-settings";
 import { cn } from "@/lib/utils";
 
-// layoutMode → sidebar collapsible type
 const collapsibleMap: Record<LayoutMode, "icon" | "offcanvas"> = {
   expanded: "offcanvas",
   collapsed: "icon",
   hidden: "offcanvas",
 };
 
-// layoutMode → sidebar open state
-const openMap: Record<LayoutMode, boolean> = {
+const defaultOpenMap: Record<LayoutMode, boolean> = {
   expanded: true,
   collapsed: false,
   hidden: false,
 };
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
-  const { sidebarStyle, layoutMode, setLayoutMode } = useLayoutSettings();
-
-  // Sync SidebarTrigger toggle back to layoutMode:
-  // expanded(open=true)  → trigger closes → collapsed(open=false)
-  // collapsed(open=false) → trigger opens  → expanded(open=true)
-  // hidden uses custom button, SidebarProvider open stays false
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (layoutMode === "expanded" && !open) {
-        setLayoutMode("collapsed");
-      } else if (layoutMode === "collapsed" && open) {
-        setLayoutMode("expanded");
-      }
-    },
-    [layoutMode, setLayoutMode],
-  );
+  const { sidebarStyle, layoutMode } = useLayoutSettings();
 
   return (
-    <SidebarProvider open={openMap[layoutMode]} onOpenChange={handleOpenChange}>
+    <SidebarProvider defaultOpen={defaultOpenMap[layoutMode]}>
       <AppSidebar collapsible={collapsibleMap[layoutMode]} />
       <SidebarInset
         className={cn(

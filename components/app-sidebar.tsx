@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutSettings } from "@/components/layout-settings-context";
+import { siteConfig } from "@/lib/site";
 import {
   Sidebar,
   SidebarContent,
@@ -125,11 +126,19 @@ export function AppSidebar({ collapsible }: { collapsible?: "offcanvas" | "icon"
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <LayoutDashboard className="size-4 shrink-0" />
+                  <img
+                    src={siteConfig.icon}
+                    alt={siteConfig.name}
+                    width={20}
+                    height={20}
+                    className="rounded-sm"
+                  />
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-                  <span className="truncate font-semibold">管理后台</span>
-                  <span className="truncate text-xs text-muted-foreground">Admin Dashboard</span>
+                  <span className="truncate font-semibold">{siteConfig.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {siteConfig.subtitle}
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
