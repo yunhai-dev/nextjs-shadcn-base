@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# nextjs-shadcn-base
 
-## Getting Started
+基于 Next.js App Router + shadcn/ui 的中文管理后台基础模板。
 
-First, run the development server:
+## 技术栈
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js** (App Router)
+- **shadcn/ui** (radix-nova style)
+- **Tailwind CSS v4**
+- **next-themes** 主题切换
+- **pnpm** 包管理
+
+## 功能特性
+
+- 响应式侧边栏，支持三种布局模式：默认（展开）、紧凑（图标）、铺满（隐藏）
+- 三种侧边栏样式：标准、浮动、内嵌
+- 亮色 / 暗色 / 跟随系统主题切换
+- 样式设置抽屉，实时预览并持久化到 localStorage
+- 仪表盘页面：统计卡片、收入图表、热销商品、近期订单
+- 数据表格模式：搜索、多维过滤、分页、批量操作
+- 可复用 hooks：`useDataTable`、`useRowSelection`、`useDebounce`
+
+## 路由结构
+
+```
+app/
+├── layout.tsx              # 根布局（ThemeProvider）
+└── (admin)/
+    ├── layout.tsx          # 管理布局（Sidebar + Header）
+    ├── page.tsx            # 仪表盘
+    ├── users/page.tsx      # 用户管理
+    ├── orders/page.tsx     # 订单管理
+    └── settings/page.tsx   # 系统设置
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 快速开始
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+打开 [http://localhost:3000](http://localhost:3000) 查看效果。
 
-## Learn More
+## 主要组件
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 组件                  | 说明                                                     |
+| --------------------- | -------------------------------------------------------- |
+| `AppSidebar`          | 可折叠侧边栏，支持分组导航和子菜单                       |
+| `AppHeader`           | 顶部栏：面包屑、搜索、主题切换、样式设置、通知、用户菜单 |
+| `StyleSettings`       | 样式设置抽屉：主题 / 侧边栏样式 / 布局模式               |
+| `FacetFilter`         | 多选过滤器，带 popover 命令面板                          |
+| `DataTablePagination` | 分页栏：每页条数 + 页码导航                              |
+| `BulkActionBar`       | 批量操作浮动栏                                           |
