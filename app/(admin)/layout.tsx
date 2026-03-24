@@ -31,19 +31,12 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <AppSidebar collapsible={collapsibleMap[layoutMode]} />
       <SidebarInset
         className={cn(
-          sidebarStyle === "inset" &&
-            "m-2 rounded-xl overflow-hidden h-[calc(100svh-1rem)] flex flex-col",
+          "overflow-hidden",
+          sidebarStyle === "inset" && "m-2 rounded-xl h-[calc(100svh-1rem)] flex flex-col",
         )}
       >
         <AppHeader />
-        <main
-          className={cn(
-            "flex flex-1 flex-col gap-4 p-4",
-            sidebarStyle === "inset" && "overflow-y-auto",
-          )}
-        >
-          {children}
-        </main>
+        <main className={cn("flex flex-1 flex-col gap-4 p-4 overflow-y-auto")}>{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

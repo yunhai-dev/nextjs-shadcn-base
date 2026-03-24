@@ -31,11 +31,16 @@ export function RevenueChart() {
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[240px] w-full">
           <AreaChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+            <XAxis
+              dataKey="month"
+              tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+            />
             <YAxis
               tickFormatter={(v) => `¥${(v / 10000).toFixed(0)}万`}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
               tickLine={false}
               axisLine={false}
             />

@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   ChevronRight,
+  ChevronsUpDown,
   Package,
   Bell,
   UserCheck,
@@ -15,6 +16,7 @@ import {
   PackagePlus,
   LineChart,
   PieChart,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +36,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -105,13 +108,27 @@ const navGroups: NavGroup[] = [
   },
   {
     label: "系统",
-    items: [{ title: "系统设置", icon: Settings, href: "/settings" }],
+    items: [
+      { title: "系统设置", icon: Settings, href: "/settings" },
+      {
+        title: "错误页面",
+        icon: AlertTriangle,
+        children: [
+          { title: "403 禁止访问", href: "/errors/403" },
+          { title: "404 页面不存在", href: "/errors/404" },
+          { title: "500 服务器错误", href: "/errors/500" },
+          { title: "503 服务不可用", href: "/errors/503" },
+        ],
+      },
+    ],
   },
 ];
 
 export function AppSidebar({ collapsible }: { collapsible?: "offcanvas" | "icon" | "none" }) {
   const pathname = usePathname();
   const { sidebarStyle, layoutMode } = useLayoutSettings();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
     <Sidebar
@@ -154,32 +171,57 @@ export function AppSidebar({ collapsible }: { collapsible?: "offcanvas" | "icon"
               <SidebarMenu>
                 {group.items.map((item) =>
                   item.children ? (
-                    <Collapsible
-                      key={item.title}
-                      asChild
-                      defaultOpen={item.children.some((c) => c.href === pathname)}
-                    >
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton tooltip={item.title}>
-                            <item.icon />
-                            <span>{item.title}</span>
-                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
-                          <SidebarMenuSub>
+                    isCollapsed ? (
+                      <SidebarMenuItem key={item.title}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton tooltip={item.title}>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent side="right" align="start" className="w-48">
                             {item.children.map((sub) => (
-                              <SidebarMenuSubItem key={sub.href}>
-                                <SidebarMenuSubButton asChild isActive={pathname === sub.href}>
-                                  <Link href={sub.href}>{sub.title}</Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
+                              <DropdownMenuItem key={sub.href} asChild>
+                                <Link
+                                  href={sub.href}
+                                  className={pathname === sub.href ? "bg-accent" : ""}
+                                >
+                                  {sub.title}
+                                </Link>
+                              </DropdownMenuItem>
                             ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </SidebarMenuItem>
-                    </Collapsible>
+                    ) : (
+                      <Collapsible
+                        key={item.title}
+                        asChild
+                        defaultOpen={item.children.some((c) => c.href === pathname)}
+                      >
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton tooltip={item.title}>
+                              <item.icon />
+                              <span>{item.title}</span>
+                              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
+                            <SidebarMenuSub>
+                              {item.children.map((sub) => (
+                                <SidebarMenuSubItem key={sub.href}>
+                                  <SidebarMenuSubButton asChild isActive={pathname === sub.href}>
+                                    <Link href={sub.href}>{sub.title}</Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    )
                   ) : (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -207,15 +249,15 @@ export function AppSidebar({ collapsible }: { collapsible?: "offcanvas" | "icon"
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
-                  <Avatar className="size-8">
+                  <Avatar className="size-8 rounded-md">
                     <AvatarImage src="" />
-                    <AvatarFallback>管</AvatarFallback>
+                    <AvatarFallback className="rounded-md">管</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-medium">管理员</span>
                     <span className="text-xs text-muted-foreground">admin@example.com</span>
                   </div>
-                  <ChevronRight className="ml-auto" />
+                  <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="w-48">
