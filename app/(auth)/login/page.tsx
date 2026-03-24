@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-muted/40 p-4">
+    <div className="min-h-svh flex items-center justify-center bg-muted/40 p-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2 mb-8">

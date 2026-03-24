@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function LoginSplitPage() {
   return (
-    <div className="flex flex-1">
+    <div className="min-h-svh flex">
       {/* Left — form */}
       <div className="flex flex-1 flex-col justify-center px-8 py-12 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
