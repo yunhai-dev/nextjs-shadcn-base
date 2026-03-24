@@ -1,16 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 export default function GeneralSettingsPage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>基本信息</CardTitle>
-        <CardDescription>修改系统基本配置信息</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2 className="text-base font-semibold">基本信息</h2>
+        <p className="text-sm text-muted-foreground">修改系统基本配置信息</p>
+      </div>
+      <div className="flex flex-col gap-4">
         <div className="grid gap-2">
           <label className="text-sm font-medium">系统名称</label>
           <Input defaultValue="管理后台" />
@@ -63,7 +62,7 @@ export default function GeneralSettingsPage() {
         <div className="flex justify-end">
           <Button>保存设置</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

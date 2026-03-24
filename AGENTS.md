@@ -233,17 +233,42 @@ export default function SomePage() {
 
 ### Settings Page Pattern
 
-Side-nav layout with fixed left nav and scrollable right content:
+Side-nav layout with URL-bound sections. Each section is a separate page under a shared layout:
+
+```
+app/(admin)/settings/
+  layout.tsx          # shared side-nav + header, usePathname for active highlight
+  page.tsx            # redirect("/settings/general")
+  general/page.tsx
+  security/page.tsx
+  notifications/page.tsx
+```
 
 ```tsx
-<div className="flex flex-col gap-6 h-full">
-  <div>{/* header + Separator */}</div>
-  <div className="flex flex-1 min-h-0 gap-8">
-    <nav className="w-44 shrink-0 flex flex-col gap-1">{/* nav buttons */}</nav>
-    <div className="flex-1 overflow-y-auto">{/* section content */}</div>
-  </div>
-</div>
+// layout.tsx — "use client"
+const navItems = [
+  { label: "基本设置", href: "/settings/general" },
+  { label: "安全设置", href: "/settings/security" },
+];
+const pathname = usePathname();
+// active: pathname === item.href
+// nav items are <Link> (not <button>)
 ```
+
+- Section content has **no Card border/rounded** — plain `<div>` with title + description
+- `page.tsx` at the index route must `redirect()` to the default section
+- Nav items use `<Link>` not `<button>` so URLs are bookmarkable
+
+### Tab / Sub-nav URL Binding Rule
+
+**Page-level side navigation MUST be URL-bound** (like the settings page):
+
+- Each section → its own `page.tsx` under a shared `layout.tsx`
+- Index route → `redirect()` to default section
+- Active state driven by `usePathname()`, not `useState`
+- Nav items use `<Link>` not `<button>`
+
+**In-page tabs** (e.g. `shadcn Tabs` within a single page) may use local state — no URL binding required.
 
 ### Error Page Pattern
 
