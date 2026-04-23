@@ -1,0 +1,29 @@
+{
+  "skill_name": "shadcn-admin-scaffold",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我创建一个产品管理的列表页，路径是 /products，需要有产品名称、分类、价格、库存、状态这几列。状态有：在售、下架、缺货。分类有：电子产品、服装、食品。要支持按状态和分类筛选，还要有批量上架、批量下架、批量删除的功能。",
+      "expected_output": "生成 app/(admin)/products/page.tsx 文件，包含完整的列表页结构：搜索框、状态和分类的 FacetFilter、表格（带复选框和三点菜单）、分页器、批量操作栏、删除确认对话框。使用 useDataTable hook，包含 mock 数据。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我需要一个系统配置的设置页面，路径是 /system-config，有三个 section：基本配置（/system-config/basic）、邮件配置（/system-config/email）、存储配置（/system-config/storage）。每个 section 都要有标题和描述。",
+      "expected_output": "生成 app/(admin)/system-config/ 目录，包含 layout.tsx（带侧边导航）、page.tsx（重定向到 basic）、basic/page.tsx、email/page.tsx、storage/page.tsx。Layout 使用 usePathname 判断激活状态，section 页面无 Card 包裹。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "在侧边栏添加一个新的菜单分组叫\"内容管理\"，里面有两个菜单：文章管理（/articles）和分类管理（/categories）。用 FileText 和 FolderTree 图标。",
+      "expected_output": "修改 components/app-sidebar.tsx，在 navGroups 数组中添加新分组，包含正确的 label、items 结构，使用指定的图标组件。",
+      "files": ["components/app-sidebar.tsx"]
+    },
+    {
+      "id": 4,
+      "prompt": "帮我创建文章管理功能。首先创建文章列表页 /articles，需要显示标题、作者、分类、发布状态（草稿、已发布、已下架）、发布时间这几列，支持按状态和分类筛选。然后创建文章编辑页 /articles/[id]，这个页面比较复杂，需要有标题输入框、富文本编辑器区域（用个 textarea 占位就行）、分类选择、标签输入、封面图上传区域、发布状态选择，还要有保存草稿和发布两个按钮。",
+      "expected_output": "生成两个文件：1) app/(admin)/articles/page.tsx - 完整的列表页，包含搜索、状态和分类筛选、表格、分页、批量操作。2) app/(admin)/articles/[id]/page.tsx - 编辑页面，包含表单布局、各种输入组件、操作按钮。编辑页使用 Card 包裹表单区域，布局清晰。",
+      "files": []
+    }
+  ]
+}

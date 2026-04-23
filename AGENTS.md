@@ -79,6 +79,59 @@ app/layout.tsx
                  └─ StyleSettings  ← outside SidebarProvider
 ```
 
+## Sidebar Navigation
+
+### How to Add Menu Items
+
+Edit `components/app-sidebar.tsx` and modify the `navGroups` array:
+
+```tsx
+const navGroups: NavGroup[] = [
+  {
+    label: "概览", // Group label
+    items: [{ title: "仪表盘", icon: LayoutDashboard, href: "/" }],
+  },
+  {
+    label: "业务管理", // Another group
+    items: [
+      { title: "用户管理", icon: Users, href: "/users" },
+      { title: "订单管理", icon: ShoppingCart, href: "/orders" },
+    ],
+  },
+];
+```
+
+### Menu Item Types
+
+**Simple Link** (no children):
+
+```tsx
+{ title: "用户管理", icon: Users, href: "/users" }
+```
+
+**Collapsible Group** (with children):
+
+```tsx
+{
+  title: "错误页面",
+  icon: AlertTriangle,
+  children: [
+    { title: "403 禁止访问", href: "/errors/403" },
+    { title: "404 页面不存在", href: "/errors/404" },
+  ],
+}
+```
+
+### Navigation Rules
+
+- Each group has a `label` (displayed as `SidebarGroupLabel`)
+- Items with `href` are direct links
+- Items with `children` become collapsible sub-menus
+- When sidebar is collapsed (`icon` mode), items with children show a `DropdownMenu` on hover
+- When expanded, items with children use `Collapsible` component
+- Active state is determined by `pathname === item.href`
+- Sub-menus auto-expand if any child matches current pathname
+
 ## Key Components
 
 | File                                     | Purpose                                                                                                        |
@@ -135,6 +188,8 @@ pagination, input-group
 
 ### `useDataTable` (master table hook)
 
+Provides all state management for list pages: pagination, search, filters, and row selection.
+
 ```tsx
 const {
   page,
@@ -178,60 +233,436 @@ const { selected, allSelected, someSelected, toggleAll, toggleOne, clearSelectio
 
 ## Reusable Table Components
 
-| File                                   | Purpose                                                                    |
-| -------------------------------------- | -------------------------------------------------------------------------- |
-| `components/facet-filter.tsx`          | Dashed-border filter button, popover command palette, max 2 inline labels  |
-| `components/data-table-pagination.tsx` | Rows-per-page selector + first/prev/pages/next/last                        |
-| `components/bulk-action-bar.tsx`       | Fixed floating bar: clear + count + icon-only action buttons with tooltips |
+| Component                              | Purpose                                                                    | Import Path                          |
+| -------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
+| `FacetFilter`                          | Multi-select filter button with popover, max 2 inline labels               | `@/components/facet-filter`          |
+| `DataTablePagination`                  | Rows-per-page selector + first/prev/pages/next/last                        | `@/components/data-table-pagination` |
+| `BulkActionBar`                        | Fixed floating bar: clear + count + icon-only action buttons with tooltips | `@/components/bulk-action-bar`       |
+| `Table`, `TableHeader`, `TableBody`... | shadcn table primitives                                                    | `@/components/ui/table`              |
+| `Input`                                | Search input                                                               | `@/components/ui/input`              |
+| `Checkbox`                             | Row selection checkboxes                                                   | `@/components/ui/checkbox`           |
+| `DropdownMenu`                         | Row action menu (three-dot menu)                                           | `@/components/ui/dropdown-menu`      |
+| `Dialog`                               | Simple detail view modal                                                   | `@/components/ui/dialog`             |
+| `AlertDialog`                          | Destructive action confirmation (delete, disable, etc.)                    | `@/components/ui/alert-dialog`       |
 
-### FacetFilter Reset Button Convention
+## List Page Implementation Guide
 
-```tsx
-{
-  hasActiveFilters && (
-    <button
-      onClick={clearAllFilters}
-      className="flex items-center gap-1 h-9 px-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <X className="size-3.5" />
-      重置
-    </button>
-  );
-}
-```
-
-## Page Patterns
-
-### List/Table Page Template
+### Complete List Page Structure
 
 ```tsx
 "use client";
-import { useDataTable } from "@/hooks/use-data-table";
+
+import { useEffect, useState } from "react";
+import { Plus, MoreHorizontal, Trash2, Power, PowerOff, X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FacetFilter } from "@/components/facet-filter";
 import { DataTablePagination } from "@/components/data-table-pagination";
-import { BulkActionBar, type BulkAction } from "@/components/bulk-action-bar";
+import { BulkActionBar } from "@/components/bulk-action-bar";
+import { useDataTable } from "@/hooks/use-data-table";
 
-export default function SomePage() {
-  const { ...all } = useDataTable({ ids, filterKeys: ["status"] });
-  const bulkActions: BulkAction[] = [{ icon: <Icon />, label: "操作", onClick: () => {} }];
+export default function ListPage() {
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const {
+    page,
+    pageSize,
+    setPage,
+    onPageSizeChange,
+    search,
+    onSearchChange,
+    filters,
+    toggleFilter,
+    clearFilter,
+    clearAllFilters,
+    hasActiveFilters,
+    selected,
+    allSelected,
+    someSelected,
+    toggleAll,
+    toggleOne,
+    clearSelection,
+    params,
+  } = useDataTable({
+    ids: data.map((item) => item.id),
+    filterKeys: ["status", "role"],
+  });
+
+  // API call with params
+  useEffect(() => {
+    // fetch("/api/items", { params })
+    console.log("[API params]", params);
+  }, [params]);
+
+  const handleDelete = (id: number) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    // API call to delete
+    console.log("Delete:", deleteId);
+    setDeleteId(null);
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      {/* toolbar: Input + FacetFilter + reset */}
-      {/* Table with checkboxes */}
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">页面标题</h1>
+          <p className="text-muted-foreground">页面描述</p>
+        </div>
+        <Button>
+          <Plus data-icon="inline-start" />
+          新增
+        </Button>
+      </div>
+
+      {/* Toolbar: Search + Filters + Reset */}
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="搜索..."
+          className="w-56"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+        <FacetFilter
+          label="状态"
+          options={statusOptions}
+          selected={filters["status"]}
+          onToggle={(v) => toggleFilter("status", v)}
+          onClear={() => clearFilter("status")}
+        />
+        <FacetFilter
+          label="角色"
+          options={roleOptions}
+          selected={filters["role"]}
+          onToggle={(v) => toggleFilter("role", v)}
+          onClear={() => clearFilter("role")}
+        />
+        {hasActiveFilters && (
+          <button
+            onClick={clearAllFilters}
+            className="flex items-center gap-1 h-9 px-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="size-3.5" />
+            重置
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <Card className="py-0 rounded-lg">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    data-state={someSelected ? "indeterminate" : undefined}
+                    onCheckedChange={toggleAll}
+                    aria-label="全选"
+                  />
+                </TableHead>
+                <TableHead>列名</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead className="w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((item) => (
+                <TableRow key={item.id} data-state={selected.has(item.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(item.id)}
+                      onCheckedChange={() => toggleOne(item.id)}
+                      aria-label={`选择 ${item.name}`}
+                    />
+                  </TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>
+                    <Badge>{item.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>查看详情</DropdownMenuItem>
+                        <DropdownMenuItem>编辑</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          删除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
       <DataTablePagination
         page={page}
-        totalPages={N}
+        totalPages={totalPages}
         pageSize={pageSize}
         onPageChange={setPage}
         onPageSizeChange={onPageSizeChange}
       />
-      <BulkActionBar count={selected.size} onClear={clearSelection} actions={bulkActions} />
+
+      {/* Bulk Actions */}
+      <BulkActionBar
+        count={selected.size}
+        onClear={clearSelection}
+        actions={[
+          { icon: <Power className="size-4" />, label: "开启", onClick: () => {} },
+          { icon: <PowerOff className="size-4" />, label: "禁用", onClick: () => {} },
+          {
+            icon: <Trash2 className="size-4" />,
+            label: "删除",
+            onClick: () => {},
+            className: "size-7 text-destructive hover:text-destructive",
+          },
+        ]}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>此操作无法撤销。确定要删除这条记录吗?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 ```
 
-### Settings Page Pattern
+### List Page Checklist
+
+- [ ] **Page Header**: Title + description + action button (新增)
+- [ ] **Toolbar**: `Input` for search + `FacetFilter` for filters + reset button
+- [ ] **Table**: Wrapped in `Card` → `CardContent` with `p-0`
+- [ ] **Checkbox Column**: `w-10` width, `allSelected` + `someSelected` for header
+- [ ] **Action Column**: `w-10` width, `DropdownMenu` with `MoreHorizontal` icon
+- [ ] **Row Selection**: `data-state="selected"` on `TableRow` when selected
+- [ ] **Pagination**: `DataTablePagination` component below table
+- [ ] **Bulk Actions**: `BulkActionBar` with icon-only buttons
+- [ ] **Delete Confirmation**: `AlertDialog` with `variant="destructive"` on action button
+
+### Data Binding
+
+**Search**:
+
+- Use `Input` component with `value={search}` and `onChange={(e) => onSearchChange(e.target.value)}`
+- `useDataTable` handles debouncing automatically
+
+**Filters**:
+
+- Use `FacetFilter` component for each filter dimension
+- Pass `selected={filters["key"]}`, `onToggle={(v) => toggleFilter("key", v)}`, `onClear={() => clearFilter("key")}`
+
+**Pagination**:
+
+- `DataTablePagination` handles all pagination UI
+- Pass `page`, `totalPages`, `pageSize`, `onPageChange`, `onPageSizeChange`
+- `totalPages` comes from API response
+
+**API Integration**:
+
+```tsx
+useEffect(() => {
+  // params contains: { page, pageSize, search, filters }
+  fetch("/api/items", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}, [params]);
+```
+
+### Row Actions (Three-Dot Menu)
+
+**Standard Actions**:
+
+```tsx
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost" size="icon">
+      <MoreHorizontal className="size-4" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    <DropdownMenuItem onClick={() => handleView(item.id)}>查看详情</DropdownMenuItem>
+    <DropdownMenuItem onClick={() => handleEdit(item.id)}>编辑</DropdownMenuItem>
+    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item.id)}>
+      删除
+    </DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+**Rules**:
+
+- Destructive actions (删除, 禁用) use `className="text-destructive"`
+- Always use `align="end"` for right-aligned menus
+- Use `onClick` handlers, not `<Link>` for actions that need confirmation
+
+### Detail View Patterns
+
+**Simple Detail (Dialog)**:
+Use `Dialog` for simple data that fits in a modal:
+
+```tsx
+const [viewId, setViewId] = useState<number | null>(null);
+
+<Dialog open={viewId !== null} onOpenChange={() => setViewId(null)}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>详情</DialogTitle>
+    </DialogHeader>
+    <div className="space-y-4">{/* Detail content */}</div>
+  </DialogContent>
+</Dialog>;
+```
+
+**Complex Detail (Sub-page)**:
+For complex data with tabs, forms, or nested tables, create a sub-route:
+
+```
+app/(admin)/users/
+  page.tsx              # List page
+  [id]/page.tsx         # Detail page
+```
+
+```tsx
+// app/(admin)/users/[id]/page.tsx
+export default function UserDetailPage({ params }: { params: { id: string } }) {
+  return <div className="flex flex-col gap-4">{/* Detail content */}</div>;
+}
+```
+
+### Delete Confirmation Pattern
+
+**Always use `AlertDialog` for destructive actions**:
+
+```tsx
+const [deleteId, setDeleteId] = useState<number | null>(null);
+
+const handleDelete = (id: number) => {
+  setDeleteId(id);
+};
+
+const confirmDelete = async () => {
+  await fetch(`/api/items/${deleteId}`, { method: "DELETE" });
+  setDeleteId(null);
+  // Refresh data
+};
+
+<AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>确认删除</AlertDialogTitle>
+      <AlertDialogDescription>此操作无法撤销。确定要删除这条记录吗?</AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>取消</AlertDialogCancel>
+      <AlertDialogAction variant="destructive" onClick={confirmDelete}>
+        删除
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>;
+```
+
+**Rules**:
+
+- Use `variant="destructive"` on `AlertDialogAction` for delete/disable actions
+- Always provide clear description of consequences
+- Use `open` + `onOpenChange` for controlled state
+- Store the ID to delete in state, not the full object
+
+### Bulk Actions Pattern
+
+**Standard Bulk Actions**:
+
+```tsx
+import { Power, PowerOff, Trash2 } from "lucide-react";
+import { BulkActionBar, type BulkAction } from "@/components/bulk-action-bar";
+
+const bulkActions: BulkAction[] = [
+  {
+    icon: <Power className="size-4" />,
+    label: "批量开启",
+    onClick: () => console.log("Enable:", Array.from(selected)),
+  },
+  {
+    icon: <PowerOff className="size-4" />,
+    label: "批量禁用",
+    onClick: () => console.log("Disable:", Array.from(selected)),
+  },
+  {
+    icon: <Trash2 className="size-4" />,
+    label: "批量删除",
+    onClick: () => console.log("Delete:", Array.from(selected)),
+    className: "size-7 text-destructive hover:text-destructive",
+  },
+];
+
+<BulkActionBar count={selected.size} onClear={clearSelection} actions={bulkActions} />;
+```
+
+**Rules**:
+
+- Destructive actions use `className="size-7 text-destructive hover:text-destructive"`
+- Always provide `label` for tooltip
+- Use icon-only buttons (no text)
+- Bar auto-hides when `count === 0`
+
+## Settings Page Pattern
 
 Side-nav layout with URL-bound sections. Each section is a separate page under a shared layout:
 
@@ -270,7 +701,7 @@ const pathname = usePathname();
 
 **In-page tabs** (e.g. `shadcn Tabs` within a single page) may use local state — no URL binding required.
 
-### Error Page Pattern
+## Error Page Pattern
 
 ```tsx
 <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center relative overflow-hidden">
@@ -295,3 +726,6 @@ const pathname = usePathname();
 5. Never add `h-full` inside a margin/padding container — causes overflow in floating layout.
 6. Inset mode: `overflow-hidden` on `SidebarInset`, `overflow-y-auto` on inner `<main>`.
 7. Sidebar footer user button uses `ChevronsUpDown` icon (not `ChevronRight`).
+8. Always wrap tables in `Card` → `CardContent` with `p-0` for consistent styling.
+9. Use `MoreHorizontal` icon for row action menus (three-dot menu).
+10. Destructive actions always require `AlertDialog` confirmation.

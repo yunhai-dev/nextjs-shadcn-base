@@ -9,6 +9,10 @@ import {
   ChevronsUpDown,
   AlertTriangle,
   LogIn,
+  FileText,
+  FolderTree,
+  Package,
+  Cog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -59,12 +63,21 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "用户管理", icon: Users, href: "/users" },
       { title: "订单管理", icon: ShoppingCart, href: "/orders" },
+      { title: "产品管理", icon: Package, href: "/products" },
+    ],
+  },
+  {
+    label: "内容管理",
+    items: [
+      { title: "文章管理", icon: FileText, href: "/articles" },
+      { title: "分类管理", icon: FolderTree, href: "/categories" },
     ],
   },
   {
     label: "系统",
     items: [
       { title: "系统设置", icon: Settings, href: "/settings" },
+      { title: "系统配置", icon: Cog, href: "/system-config" },
       {
         title: "登录页面",
         icon: LogIn,
